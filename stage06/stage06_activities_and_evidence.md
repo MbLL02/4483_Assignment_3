@@ -2,85 +2,86 @@
 
 Complete this one group record. Link actual issues, diffs, tests and reviews; avoid copying entire histories. Blank fields are intentional. Duplicate rows as needed. Use synthetic data only. Every member records their own meaningful contribution. Do not invent results, reviews or Copilot use.
 
-- Group/tutorial: [response]
-- Members, GitHub usernames and cohorts: [response]
-- Repository URL: [response]
-- Starting SHA: [response]
+- Group/tutorial: Group 7 Thursday 2:30pm
+- Members, GitHub usernames and cohorts: u3309151 MBLL02, u3313159 Rubai21321
+- Repository URL: https://github.com/MbLL02/4483_Assignment_3.git
+- Starting SHA: 64e3fcd
 
 ## A Requirement to issue activities
 
 ### FR-02 Patient Search
 
-- Title: [response]
-- Context: [response]
-- Requirement: [response]
-- Acceptance criteria: [response]
-- Scope: [response]
-- Definition of Done: [response]
-- Owner: [response]
-- Actual issue link: [response]
+- Title: Implement patient lookup by ID (PatientService.find_patient)
+- Context: The application coordinates registered patients within an active session. Staff need to retrieve existing registered patients by ID without creating duplicate objects.
+- Requirement: Return the actual registered Patient object stored in SmartCareDataStore given a valid patient ID.
+- Acceptance criteria: Return the identical stored Patient reference for an existing valid ID. Strip/trim leading and trailing whitespace from the ID input.Ensure ID lookup remains strictly case-sensitive. Raise ValueError if the ID is blank, empty, or non-string. Raise LookupError if the ID is valid format but not found in the store.
+- Scope: Confined to PatientService.find_patient in smartcare/services.py and unit tests in tests/test_services.py. Does not modify domain.py, data_store.py, or console/menu logic.
+- Definition of Done: Method implemented, passes 100% of unit tests covering positive/negative/boundary cases, passes full regression test suite, human review and Copilot review completed, merged to main via PR.
+- Owner: MBLL02
+- Actual issue link: 
 
 ### FR-06 Appointment Cancellation with FR-07 retained history
 
-- Title: [response]
-- Context: [response]
-- Requirement: [response]
-- Acceptance criteria: [response]
-- Scope: [response]
-- Definition of Done: [response]
-- Owner: [response]
-- Actual issue link: [response]
+- Title: Implement guarded appointment cancellation (AppointmentService.cancel_appointment)
+- Context: Scheduled appointments may need cancellation while preserving complete clinical audit history and record retrievability.
+- Requirement: Cancel a scheduled appointment by transitioning its state using the domain method while retaining the appointment object in the data store.
+- Acceptance criteria: Retrieve the existing appointment and transition status from SCHEDULED to CANCELLED via appointment.cancel(). Return the exact same appointment object reference. Retain the appointment in SmartCareDataStore (verifiable via find_appointment and list_appointments). Raise LookupError if the appointment ID does not exist. Raise ValueError for blank/invalid ID. Raise ValueError without mutating object state if the appointment is already CANCELLED or COMPLETED.
+- Scope: Confined to AppointmentService.cancel_appointment in smartcare/services.py and unit tests in tests/test_services.py. Does not delete data from data_store.py.
+- Definition of Done: Implemented without mutating rejected states or deleting records; passes unit and regression tests; approved via peer PR review; merged to main.
+- Owner: Rubai21321
+- Actual issue link: 
 
 ## B Commit quality
 
-| Original example | Strong or Weak | Reason |
-|---|---|---|
-| changes | [select] | [response] |
-| final version | [select] | [response] |
-| Add patient search by ID | [select] | [response] |
-| fix stuff | [select] | [response] |
-| Prevent cancellation of completed appointments | [select] | [response] |
+| Original example                               | Strong or Weak | Reason     |
+|------------------------------------------------|----------------|------------|
+| changes                                        | Weak       | Vague, non-descriptive, provides no context on what files or behaviors changed. |
+| final version                                  | Weak       | Meaningless in version control; fails to describe engineering intent or atomic functionality. |
+| Add patient search by ID                       | Strong       | Clear imperative statement describing the exact feature and behavior introduced. |
+| fix stuff                                      | Weak       | Ambiguous, does not state what bug was fixed or how it was verified. |
+| Prevent cancellation of completed appointments | Strong       | Specific, intent-driven description of a business invariant and boundary enforcement. |
 
 ## C Over scoped PR review
 
 A cancellation PR also renames unrelated patient fields, restructures unrelated code and adds a new dependency.
 
-- Scope concerns: [response]
-- Responsibility and architecture concerns: [response]
-- Testing and review concerns: [response]
-- Changes to remove or separate, with reasons: [response]
+- Scope concerns: The PR mixes appointment cancellation logic with unrelated refactoring (renaming patient fields, restructures, new dependencies). This introduces merge conflicts, muddies the Git history, and makes isolated code review nearly impossible.
+- Responsibility and architecture concerns: Renaming patient fields breaks established public domain contracts without an approved requirement change. Adding external dependencies introduces maintenance bloat when the project strictly requires standard Python library utilities.
+- Testing and review concerns: Tests for cancellation might pass while regressions in patient workflows go unnoticed. Diff noise hides genuine flaws in cancellation edge cases
+- Changes to remove or separate, with reasons: Strip all patient field renames, external package additions, and broad file formatting. Keep only AppointmentService.cancel_appointment and its corresponding test file changes.
 
 ## D Challenge a weak Copilot review
 
 GitHub Copilot says: "Looks good; tests pass."
 
-- Missing evidence: [response]
-- Follow-up review question 1: [response]
-- Follow-up review question 2: [response]
-- Follow-up review question 3: [response]
-- Follow-up review question 4: [response]
-- Follow-up review question 5: [response]
-- Additional questions if useful: [response]
+- Missing evidence: Copilot provides no proof that tests actually ran, does not verify object identity (is), does not check retained history (FR-07), and does not confirm that invalid transitions preserve state without mutation.
+- Follow-up review question 1: Did you verify that the returned appointment is the identical memory reference (is) rather than a cloned object?
+- Follow-up review question 2: How does the implementation guarantee that the appointment remains retrievable in SmartCareDataStore after cancellation (FR-07)?
+- Follow-up review question 3: Does attempting to cancel a COMPLETED appointment raise ValueError while leaving status completely unchanged?
+- Follow-up review question 4: Are whitespace-padded and empty/blank IDs explicitly verified with boundary tests?
+- Follow-up review question 5: What specific tests ensure that absent IDs raise LookupError rather than silently returning None?
+- Additional questions if useful: 
 
 ## E Team workflow agreement
 
 | Practice | Team agreement |
 |---|---|
-| Branch naming | [response] |
-| Commit message convention | [response] |
-| PR size | [response] |
-| Another-member review requirement | [response] |
-| Merge rule | [response] |
-| Significant Copilot disclosure rule | [response] |
+| Branch naming | feature/<issue-id>-<short-description> (e.g., feature/fr02-patient-search) |
+| Commit message convention | Imperative mood present tense: <Action> <component>: <description>  |
+| PR size | Focused atomic changes limited to one feature/issue and its tests (under 100 lines changed) |
+| Another-member review requirement | Mandatory review and sign-off by the other teammate; self-merging is strictly prohibited |
+| Merge rule | Squash and merge or regular merge commit after all tests pass and approvals are granted |
+| Significant Copilot disclosure rule | Document prompt, generated diff, human verification checks, and Accept/Modify/Reject decision in Section H |
 
 ## F Issue and backlog index
 
 Create at least two focused issues. Add a linked practitioner-lookup issue or an explicit supporting criterion with the tutor if needed to cover all three service targets.
 
-| Issue link | Requirement | Owner | Acceptance criteria or precise link | Status |
-|---|---|---|---|---|
-| [issue 1] | [response] | [response] | [response] | [response] |
-| [issue 2] | [response] | [response] | [response] | [response] |
+| Issue link | Requirement                          | Owner      | Acceptance criteria or precise link | Status     |
+|------------|--------------------------------------|------------|-------------------------------------|------------|
+| 1          | FR-02 Patient Search                 | MBLL02 | PatientService.find_patient returns stored instance, handles trimming, raises ValueError/LookupError  | Closed ||
+| 2          | FR-06 & FR-07 Cancellation           | RUBAI21321 | AppointmentService.cancel_appointment transitions status, retains history, rejects invalid states  | Closed |
+| 3          | Supporting FR-03 Practitioner Search | MBLL02 | PractitionerService.find_practitioner returns stored instance, trimmed, handles exceptions | Closed |
 
 ## G Pull request evidence
 
