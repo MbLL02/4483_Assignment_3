@@ -9,6 +9,7 @@ from smartcare.domain import (
     AppointmentStatus,
     Patient,
     Practitioner,
+    required_text,
 )
 
 
@@ -28,14 +29,18 @@ class PatientService:
         self.data_store.add_patient(patient)
         return patient
 
-    def find_patient(self, patient_id: str) -> Patient:
-        """Stage 6 TODO: return the stored patient for a valid patient ID.
 
-        Completion must raise LookupError for absence and ValueError for
-        a blank/invalid ID. It must not create a replacement patient.
-        The starter deliberately raises NotImplementedError.
+    def find_patient(self, patient_id: str) -> Patient:
+        """Find and return a registered patient by ID.
+
+        Raise ValueError for invalid/blank ID.
+        Raise LookupError if patient is not found.
         """
-        raise NotImplementedError('Stage 6: patient lookup')
+        clean_id = required_text(patient_id, "Patient ID")
+        patient = self.data_store.find_patient(clean_id)
+        if patient is None:
+            raise LookupError(f"Patient with ID '{clean_id}' not found")
+        return patient
 
 
 class PractitionerService:
@@ -63,15 +68,13 @@ class PractitionerService:
         self.data_store.add_practitioner(practitioner)
         return practitioner
 
-    def find_practitioner(self, practitioner_id: str) -> Practitioner:
-        """Stage 6 TODO: return the stored practitioner for a valid ID.
 
-        Completion must raise LookupError for absence and ValueError for
-        a blank/invalid ID. It must not create a replacement
-        practitioner. The starter deliberately raises
-        NotImplementedError.
-        """
-        raise NotImplementedError('Stage 6: practitioner lookup')
+    def find_practitioner(self, practitioner_id: str) -> Practitioner:
+        clean_id = required_text(practitioner_id, "Practitioner ID")
+        practitioner = self.data_store.find_practitioner(clean_id)
+        if practitioner is None:
+            raise LookupError(f"Practitioner with ID '{clean_id}' not found")
+        return practitioner
 
 
 class AppointmentService:
