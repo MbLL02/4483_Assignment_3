@@ -1,12 +1,13 @@
 # Stage 7 Testing and Verification Record
 
-Group/tutorial: [complete]  Members/cohorts: [complete]
+Group/tutorial: Group 7 Thursday 2:30pm  Members: u3309151 MBLL02, u3313159 Rubai21321
 Requirements baseline: SmartCare A3 Requirements Baseline 2026, revision 2.
 Use the same project/. Link actual evidence; keep responses concise. Blank fields are for your group. Copy rows only as needed.
 
 All Assignment 3 stage materials are provided from the beginning. Complete this stage only after the previous applicable stage has been integrated, verified and recorded. Use this supplied record in stage07/ in your EXISTING repository. Preserve project/, all earlier tests, records and responses. Do not download another starter or copy staff solutions.
 
 ## A Tutorial Activities
+An AI assistant helped draft the section A and section N answers. We checked each one against our code and the handout before keeping it.
 
 ### Activity 1 Requirement to test
 
@@ -14,34 +15,49 @@ For each requirement, propose one positive test, one negative test and the key a
 
 | Requirement | Positive test | Negative test | Key assertion |
 |---|---|---|---|
-| FR-01 Register patient | [response] | [response] | [response] |
-| FR-05 Prevent practitioner conflict | [response] | [response] | [response] |
-| FR-06 Cancel appointment | [response] | [response] | [response] |
-| FR-07 Retain cancelled history | [response] | [response] | [response] |
+| FR-01 Register patient | Register "P001" / "Alex Test"; it is returned and stored | Register a second patient with ID "P001"; ValueError raised | `data_store.find_patient("P001") is patient` and, after the duplicate attempt, the original name is unchanged |
+| FR-05 Prevent practitioner conflict | Book the same practitioner at a different time, or a different practitioner at the same time; both succeed | Book the same practitioner at the same time as an existing SCHEDULED appointment; ValueError raised | `pytest.raises(ValueError)` and `len(data_store.list_appointments())` unchanged; the rejected ID is not stored |
+| FR-06 Cancel appointment | Cancel a SCHEDULED appointment | Cancel it again, or cancel a COMPLETED appointment; ValueError raised | `appointment.status is AppointmentStatus.CANCELLED` after success; status unchanged after the failed attempt |
+| FR-07 Retain cancelled history | After cancelling, look the appointment up again | Cancel an unknown ID; LookupError raised and no record created | `appointment_service.find_appointment("A1") is appointment` and its status is CANCELLED (not deleted or replaced) |
 
 ### Activity 2 Strong or weak assertion
 
 For each, select Strong for stated behaviour or Weak/unclear and explain why. State the behaviour and limits.
 
 `assert True`
-Judgement: [Strong for stated behaviour / Weak/unclear]  Why: [response]
+Judgement: Weak/unclear  Why: It can never fail, so it checks no behaviour at all. It only proves the test function ran.
 
 `assert appointment is not None`
-Judgement: [Strong for stated behaviour / Weak/unclear]  Why: [response]
+Judgement: Weak/unclear  Why: It only proves something was returned. It does not check the right object, its ID, status, participants or that it was stored.
 
 `assert appointment.status == AppointmentStatus.CANCELLED`
-Judgement: [Strong for stated behaviour / Weak/unclear]  Why: [response]
+Judgement: Strong for stated behaviour  Why: It checks the required FR-06 outcome directly. Limit: on its own it does not prove the record was retained (FR-07) or that the same object was returned.
 
 `assert len(results) > 0`
-Judgement: [Strong for stated behaviour / Weak/unclear]  Why: [response]
+Judgement: Weak/unclear  Why: It passes with wrong or extra results. It does not check which records were returned, how many were expected or their order.
 
 `assert data_store.find_appointment('A1') is appointment`
-Judgement: [Strong for stated behaviour / Weak/unclear]  Why: [response]
+Judgement: Strong for stated behaviour  Why: An identity check proves the exact stored object is retained and retrievable, not a copy or replacement. Limit: it says nothing about status unless paired with a status assertion.
 
 ### Activity 3 Boundary thinking
 
 Design boundary or edge cases for blank identifiers, whitespace-only names, same-time practitioner bookings, cancelled appointments and invalid status transitions.
-For each input/state, expected result and supporting contract: [response]
+For each input/state, expected result and supporting contract:
+
+| Input / state | Expected result | Supporting contract |
+|---|---|---|
+| Patient ID `""` | ValueError, nothing stored | `required_text`: IDs must be non-blank |
+| Patient ID `"   "` (whitespace only) | ValueError, nothing stored | `required_text` trims, then rejects blank |
+| Patient ID `" P001 "` | Stored/found as `"P001"` | IDs are trimmed |
+| Lookup `"p001"` when `"P001"` exists | LookupError | IDs are case-sensitive |
+| Name `"   "` | ValueError from Patient/Practitioner construction | Names must be non-blank after trimming |
+| Same practitioner, same minute as a SCHEDULED appointment | ValueError, appointment count unchanged | FR-05 conflict rule |
+| Same practitioner, one minute later | Booking succeeds | Conflict is exact date/time only |
+| Different practitioner, same time | Booking succeeds | Conflict is per practitioner |
+| Same practitioner/time as a CANCELLED appointment | Booking succeeds | Only SCHEDULED appointments conflict |
+| Cancel an already CANCELLED appointment | ValueError, status stays CANCELLED | FR-06: only SCHEDULED may be cancelled |
+| Cancel a COMPLETED appointment | ValueError, status stays COMPLETED | FR-06 guard in `Appointment.cancel` |
+| Cancel blank ID / unknown ID | ValueError / LookupError | Stage 6 cancellation contract |
 
 ### Activity 4 Critique GitHub Copilot tests
 
@@ -49,16 +65,16 @@ GitHub Copilot generates five tests, all of which pass. Two only assert that obj
 
 | Candidate | What is wrong | Rewritten test intention |
 |---|---|---|
-| 1 | [response] | [response] |
-| 2 | [response] | [response] |
-| 3 | [response] | [response] |
-| 4 | [response] | [response] |
-| 5 | [response] | [response] |
+| 1 | Asserts only `is not None`; passes even if the wrong patient or a copy is returned | Registering a patient returns the stored object: `find_patient("P001") is patient` and the name matches |
+| 2 | Asserts only `is not None`; does not check status or retention | Cancelling a SCHEDULED appointment sets status to CANCELLED and `find_appointment(id) is appointment` |
+| 3 | `assert True` can never fail, so it verifies nothing | Booking a conflicting slot raises ValueError and the appointment count is unchanged |
+| 4 | Assumes SMS notifications exist; this is an invented requirement not in the baseline | Reject. Replace with a real criterion, e.g. cancelling a COMPLETED appointment raises ValueError and status is unchanged |
+| 5 | Also tests invented SMS behaviour, likely needing mocks of something that does not exist | Reject. Replace with e.g. an unknown appointment ID raises LookupError and no record is created |
 
 ### Tutorial exit question
 
 Why can 100% code coverage coexist with poor software verification?
-[response]
+Coverage only shows which lines ran during the tests, not whether the tests checked the right results. A test with `assert True` or `is not None` can execute every line and still pass when the behaviour is wrong. Coverage also cannot reveal missing requirements, untested boundary values or rules that were never implemented, because code that does not exist cannot be uncovered.
 
 ## B Requirement to Test Traceability Matrix
 
@@ -177,34 +193,34 @@ Record actual work in test design, implementation, review, traceability, diagnos
 ## N Formative Questions
 
 1. What question does verification answer?
-[response]
+Are we building the product right? It checks the software against its specification, requirements and acceptance criteria.
 
 2. What question does validation answer?
-[response]
+Are we building the right product? It checks that the software meets the users' real needs and intended purpose.
 
 3. What is a unit test?
-[response]
+A small automated test that checks one unit of behaviour, such as one method or class, in isolation with a clear expected result.
 
 4. What is a pytest fixture?
-[response]
+A reusable setup function marked with `@pytest.fixture` that provides test data or objects (such as a fresh SmartCareDataStore) to any test that names it as a parameter, keeping tests independent.
 
 5. What is parametrisation in pytest?
-[response]
+Using `@pytest.mark.parametrize` to run the same test with several input/expected-output pairs, such as several blank or whitespace IDs, without duplicating code.
 
 6. What is regression testing?
-[response]
+Re-running the full existing test suite after a change to confirm that previously working behaviour has not been broken.
 
 7. What does code coverage tell us, and what does it not prove?
-[response]
+It shows which lines or branches were executed by the tests. It does not prove the assertions are meaningful, that requirements are complete or that the software is correct.
 
 8. What makes an assertion weak?
-[response]
+It can pass when the behaviour is wrong, for example `assert True`, `is not None` or `len(x) > 0`, because it does not check the specific required outcome.
 
 9. What is the appropriate role of GitHub Copilot as a test assistant?
-[response]
+A suggestion tool for test ideas and drafts. Humans design the test categories first, then check every suggestion traces to a real requirement, uses strong assertions and does not invent rules, and run it before accepting. Copilot does not decide that tests are correct or that they passed.
 
 10. What is the Stage 7 engineering rule?
-[response]
+Every test has to trace back to a real requirement or contract, be able to fail properly, and be run and recorded honestly during the full regression testing.
 
 ## O Stage Completion
 
