@@ -42,6 +42,18 @@ class PatientService:
             raise LookupError(f"Patient with ID '{clean_id}' not found")
         return patient
 
+    def find_patient(self, patient_id: str) -> Patient:
+        """Find and return a registered patient by ID.
+
+        Raise ValueError for invalid/blank ID.
+        Raise LookupError if patient is not found.
+        """
+        clean_id = required_text(patient_id, "Patient ID")
+        patient = self.data_store.find_patient(clean_id)
+        if patient is None:
+            raise LookupError(f"Patient with ID '{clean_id}' not found")
+        return patient
+
 
 class PractitionerService:
     """Coordinate practitioner registration and lookup through the shared
@@ -70,6 +82,18 @@ class PractitionerService:
 
 
     def find_practitioner(self, practitioner_id: str) -> Practitioner:
+        clean_id = required_text(practitioner_id, "Practitioner ID")
+        practitioner = self.data_store.find_practitioner(clean_id)
+        if practitioner is None:
+            raise LookupError(f"Practitioner with ID '{clean_id}' not found")
+        return practitioner
+
+    def find_practitioner(self, practitioner_id: str) -> Practitioner:
+        """Find and return a registered practitioner by ID.
+
+        Raise ValueError for invalid/blank ID.
+        Raise LookupError if practitioner is not found.
+        """
         clean_id = required_text(practitioner_id, "Practitioner ID")
         practitioner = self.data_store.find_practitioner(clean_id)
         if practitioner is None:
